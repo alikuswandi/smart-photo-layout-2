@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#171717" />
+  <title>Smart Photo Layout</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">▦</div>
+      <div><h1>Smart Photo Layout</h1><p>PHOTO PRINT & EDITOR</p></div>
+    </div>
+    <div class="top-actions">
+      <span id="storageStatus" class="storage-status">Project tersimpan otomatis</span>
+      <button id="newProjectBtn" class="btn dark small">Project Baru</button>
+      <button id="loginBtn" class="btn login-access-btn">🔐 Login</button>
+      <button id="printBtn" class="btn white access-locked" title="Login untuk mencetak">🔒 Print</button>
+      <button id="exportPdfBtn" class="btn primary access-locked" title="Login untuk mengunduh PDF">🔒 Export PDF</button>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <aside class="left-panel panel">
+      <label id="dropZone" class="drop-zone">
+        <div class="drop-icon">☁</div>
+        <strong>Upload Foto</strong>
+        <span>Klik atau drag & drop</span>
+        <input id="fileInput" type="file" multiple accept="image/*" hidden />
+      </label>
+      <div id="photoLibrary" class="photo-library"></div>
+    </aside>
+
+    <main id="workspace" class="workspace">
+      <div id="emptyWorkspace" class="empty-state">
+        <div class="empty-icon">ⓘ</div>
+        <h2>Workspace Kosong</h2>
+        <p>Tambahkan foto dan ukuran cetak, lalu klik <b>Run Auto Layout</b>.</p>
+      </div>
+      <div id="pagesContainer" class="pages-container"></div>
+    </main>
+
+    <aside class="right-panel panel">
+      <section class="settings-section">
+        <details class="layout-settings-dropdown" open>
+          <summary class="layout-settings-summary"><span>⚙ Layout Settings</span><span class="dropdown-chevron">⌄</span></summary>
+          <div class="layout-settings-content">
+        <label>Paper Size
+          <select id="paperSize">
+            <option value="A4">A4 (210 × 297 mm)</option>
+            <option value="F4">F4 (210 × 330 mm)</option>
+            <option value="A3">A3 (297 × 420 mm)</option>
+          </select>
+        </label>
+        <div class="two-cols">
+          <label>Margin (mm)<input id="margin" type="number" min="0" step="1" value="5" /></label>
+          <label>Gap (mm)<input id="gap" type="number" min="0" step="1" value="3" /></label>
+        </div>
+        <label class="toggle-row"><span>Smart Rotation</span><input id="smartRotation" type="checkbox" checked /></label>
+        <label class="toggle-row"><span>Crop Marks</span><input id="cropMarks" type="checkbox" checked /></label>
+
+        <div class="setting-divider"></div>
+        <label class="toggle-row"><span>Border Foto</span><input id="photoBorder" type="checkbox" /></label>
+        <div id="borderControls" class="border-controls disabled">
+          <label>Warna Border
+            <div class="border-color-row">
+              <input id="borderColor" type="color" value="#ffffff" />
+              <input id="borderColorText" type="text" value="#ffffff" maxlength="7" />
+            </div>
+          </label>
+          <div class="two-cols">
+            <label>Tebal (mm)<input id="borderWidth" type="number" min="0.1" max="5" step="0.1" value="1" /></label>
+            <label>Gaya
+              <select id="borderStyle">
+                <option value="solid">Solid</option>
+                <option value="dashed">Dashed</option>
+                <option value="dotted">Dotted</option>
+              </select>
+            </label>
+          </div>
+          <div class="border-presets" aria-label="Preset warna border">
+            <button type="button" data-bordercolor="#ffffff" style="--sw:#ffffff" title="Putih"></button>
+            <button type="button" data-bordercolor="#000000" style="--sw:#000000" title="Hitam"></button>
+            <button type="button" data-bordercolor="#ff0000" style="--sw:#ff0000" title="Merah"></button>
+            <button type="button" data-bordercolor="#0066ff" style="--sw:#0066ff" title="Biru"></button>
+            <button type="button" data-bordercolor="#facc15" style="--sw:#facc15" title="Kuning"></button>
+          </div>
+          <span class="helper border-helper">Border digambar ke dalam foto sehingga ukuran cetak foto tetap sama.</span>
+        </div>
+        <button id="runLayoutBtn" class="btn white">▣ Run Auto Layout</button>
+          </div>
+        </details>
+      </section>
+
+      <section class="queue-section">
+        <div class="queue-title"><h3>Antrean Cetak</h3><span id="queueBadge">0 item</span></div>
+        <div id="printQueue" class="print-queue"></div>
+      </section>
+    </aside>
+  </div>
+
+  <div id="editorModal" class="modal hidden">
+    <div class="modal-card editor-modal-card">
+      <div class="modal-header">
+        <h3>✎ Edit Foto: <span id="editorPhotoName"></span></h3>
+        <button id="closeEditor" class="icon-btn">×</button>
+      </div>
+      <div class="editor-body">
+        <div class="editor-preview" id="editorPreviewArea" title="Scroll: zoom • Drag: geser foto"><img id="editorImage" alt="Preview" /></div>
+        <div class="editor-controls">
+          <h4>POSISI & ROTASI</h4>
+          <div class="two-cols">
+            <button id="rotateLeft" class="btn dark">↶ Kiri</button>
+            <button id="rotateRight" class="btn dark">↷ Kanan</button>
+          </div>
+          <label>Zoom <span id="zoomValue">100%</span><input id="zoom" type="range" min="100" max="250" value="100" /></label>
+          <label>Geser Horizontal <span id="offsetXValue">0</span><input id="offsetX" type="range" min="-100" max="100" value="0" /></label>
+          <label>Geser Vertikal <span id="offsetYValue">0</span><input id="offsetY" type="range" min="-100" max="100" value="0" /></label>
+
+          <hr />
+          <h4>WARNA FOTO</h4>
+          <div class="photo-presets" aria-label="Preset warna foto">
+            <button type="button" data-photo-preset="normal">Normal</button>
+            <button type="button" data-photo-preset="warm">Warm</button>
+            <button type="button" data-photo-preset="cool">Cool</button>
+            <button type="button" data-photo-preset="vivid">Vivid</button>
+            <button type="button" data-photo-preset="soft">Soft</button>
+            <button type="button" data-photo-preset="bw">B&amp;W</button>
+          </div>
+          <label>Kecerahan <span id="brightnessValue">100%</span><input id="brightness" type="range" min="0" max="200" value="100" /></label>
+          <label>Kontras <span id="contrastValue">100%</span><input id="contrast" type="range" min="0" max="200" value="100" /></label>
+          <label>Saturasi <span id="saturationValue">100%</span><input id="saturation" type="range" min="0" max="200" value="100" /></label>
+
+          <hr />
+          <h4>BACKGROUND REMOVAL AI</h4>
+          <div class="ai-bg-box">
+            <div class="ai-row">
+              <div>
+                <b>AI Background Removal</b>
+                <p id="aiStatus" class="helper ai-status">Belum diproses AI.</p>
+              </div>
+              <span class="ai-badge">AI</span>
+            </div>
+            <button id="runAiBg" type="button" class="btn primary ai-btn">✦ Hapus Background dengan AI</button>
+            <button id="resetAiBg" type="button" class="btn dark ai-btn secondary-ai">Reset Hasil AI</button>
+            <div id="aiProgressWrap" class="ai-progress-wrap hidden"><div id="aiProgressBar" class="ai-progress-bar"></div></div>
+          </div>
+          <label class="toggle-row editor-toggle"><span>Gunakan Background Warna</span><input id="bgEnabled" type="checkbox" /></label>
+          <div id="bgControls" class="bg-controls">
+            <label>Warna Background
+              <div class="color-row"><input id="bgColor" type="color" value="#ff0000" /><input id="bgColorText" type="text" value="#ff0000" maxlength="7" /></div>
+            </label>
+            <div class="color-presets">
+              <button type="button" data-bgcolor="#ff0000" style="--sw:#ff0000" title="Merah"></button>
+              <button type="button" data-bgcolor="#0066ff" style="--sw:#0066ff" title="Biru"></button>
+              <button type="button" data-bgcolor="#ffffff" style="--sw:#ffffff" title="Putih"></button>
+              <button type="button" data-bgcolor="#808080" style="--sw:#808080" title="Abu-abu"></button>
+              <button type="button" data-bgcolor="#000000" style="--sw:#000000" title="Hitam"></button>
+            </div>
+            <p class="helper">AI memisahkan orang/objek dari latar. Setelah proses selesai, warna background dapat diganti tanpa menjalankan AI ulang.</p>
+          </div>
+
+          <button id="resetEditor" class="btn dark reset-btn">Reset Semua Pengaturan</button>
+        </div>
+      </div>
+      <div class="modal-footer"><button id="applyEditor" class="btn primary">Terapkan & Simpan</button></div>
+    </div>
+  </div>
+
+
+  <div id="loginModal" class="modal hidden">
+    <div class="modal-card login-modal-card">
+      <div class="modal-header">
+        <div>
+          <h3>🔐 Login Akses Penuh</h3>
+          <p class="login-subtitle">Masuk untuk mengaktifkan Print dan Export PDF.</p>
+        </div>
+        <button id="closeLogin" class="icon-btn" type="button">×</button>
+      </div>
+
+      <form id="loginForm" class="login-form">
+        <label>Username
+          <input id="loginUsername" type="text" autocomplete="username" placeholder="Masukkan username" required />
+        </label>
+
+        <label>Password
+          <div class="password-wrap">
+            <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Masukkan password" required />
+            <button id="togglePassword" class="password-toggle" type="button" title="Tampilkan / sembunyikan password">👁</button>
+          </div>
+        </label>
+
+        <p id="loginError" class="login-error hidden">Username atau password salah.</p>
+        <button type="submit" class="btn primary login-submit">Masuk & Aktifkan Akses Penuh</button>
+      </form>
+
+      <div class="login-divider"><span>Dapatkan username & password</span></div>
+
+      <div class="login-contact-actions">
+        <a class="btn whatsapp-btn"
+           href="https://wa.me/6281371700561?text=Halo%20Adit%20Print%2C%20saya%20ingin%20mendapatkan%20username%20dan%20password%20Smart%20Photo%20Layout."
+           target="_blank" rel="noopener noreferrer">💬 WhatsApp</a>
+
+        <a class="btn lynk-btn"
+           href="http://lynk.id/alikuswandi/3k396m3qrmnv"
+           target="_blank" rel="noopener noreferrer">🔗 Lynk.id</a>
+      </div>
+
+      <p class="login-note">Tanpa login, aplikasi tetap dapat digunakan untuk upload, edit foto, membuat layout, dan preview. Print serta Export PDF tetap terkunci.</p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
